@@ -1,0 +1,10 @@
+{"task_id":"math_001","category":"math","question":"A train travels 180 km in 3 hours. What is its average speed?","expected_answer":"60 km/h"}
+{"task_id":"math_002","category":"math","question":"If 7 boxes contain 8 apples each, how many apples are there in total?","expected_answer":"56"}
+{"task_id":"math_003","category":"math","question":"A jacket costs £80 after a 20% discount. What was the original price?","expected_answer":"£100"}
+{"task_id":"logic_001","category":"logic","question":"All blickets are red. Some red things are round. Does it follow that some blickets are round? Answer yes or no.","expected_answer":"No"}
+{"task_id":"logic_002","category":"logic","question":"If every zarn is a mip, and no mip is a lorp, can a zarn be a lorp? Answer yes or no.","expected_answer":"No"}
+{"task_id":"logic_003","category":"logic","question":"Mina is older than Ravi. Ravi is older than Sam. Who is youngest?","expected_answer":"Sam"}
+{"task_id":"coding_001","category":"coding","question":"In Python, what does len([1, 2, 3, 4]) return?","expected_answer":"4"}
+{"task_id":"coding_002","category":"coding","question":"In Python, what is the value of 3 * (2 + 4)?","expected_answer":"18"}
+{"task_id":"biology_001","category":"biology","question":"What organ pumps blood around the human body?","expected_answer":"heart"}
+{"task_id":"biology_002","category":"biology","question":"What gas do plants mainly absorb for photosynthesis?","expected_answer":"carbon dioxide"}
