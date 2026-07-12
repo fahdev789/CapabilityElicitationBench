@@ -17,7 +17,7 @@ python scripts/run_eval.py --provider mock
 
 ## Example Elicitation Curve
 
-![Elicitation curve](assets/elicitation_curve.png)
+![Elicitation curve](/elicitation_curve.png)
 
 *Mock data — success-rate vs. elicitation level (L0 → L7).*
 
