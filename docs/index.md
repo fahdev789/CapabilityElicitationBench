@@ -9,7 +9,8 @@ Measure how much optimisation power (prompt search → few-shot → best-of-N �
 Open benchmarks for this don’t exist.
 
 **Quick start**
-```bash
+```
 git clone https://github.com/fahdev789/CapabilityElicitationBench
 pip install -r requirements.txt
 python scripts/run_eval.py --provider mock
+```
