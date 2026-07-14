@@ -1,20 +1,29 @@
 {
-  "benchmark_name": "cot_control_v0_1",
-  "task_file": "prompts/cot_control/tasks.jsonl",
-  "output_file": "results/raw_outputs/mock_outputs.jsonl",
-  "model": {
-    "provider": "mock",
-    "name": "mock-model",
-    "temperature": 0.2,
-    "max_tokens": 400
-  },
-  "elicitation_levels": ["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7"],
-  "runs_per_task": 3,
-  "reliability_threshold": 0.8,
-  "constraint": {
-    "work_header": "WORK:",
-    "work_prefix": "CHECK:",
-    "work_lines": 3,
-    "answer_prefix": "ANSWER:"
-  }
+    "benchmark_name": "cot_control_v0_1",
+    "task_file": "prompts/cot_control/tasks.jsonl",
+    "output_file": "results/raw_outputs/mock_outputs.jsonl",
+    "model": {
+        "provider": "openrouter",
+        "name": "anthropic/claude-sonnet-5",
+        "temperature": 0.2,
+        "max_tokens": 400
+    },
+    "elicitation_levels": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6",
+        "L7"
+    ],
+    "runs_per_task": 3,
+    "reliability_threshold": 0.8,
+    "constraint": {
+        "work_header": "WORK:",
+        "work_prefix": "CHECK:",
+        "work_lines": 3,
+        "answer_prefix": "ANSWER:"
+    }
 }
