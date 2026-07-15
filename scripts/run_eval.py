@@ -9,10 +9,33 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
+
+import requests
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    # python-dotenv is in requirements.txt, but don't hard-fail if it's
+    # missing — env vars can still be set directly in the shell.
+    pass
+
+
+PROVIDER_ENV_VARS = {
+    "openrouter": "OPENROUTER_API_KEY",
+    "anthropic": "ANTHROPIC_API_KEY",
+    "openai": "OPENAI_API_KEY",
+}
+
+MAX_RETRIES = 3
+RETRY_BASE_DELAY_SECONDS = 2
 
 
 ELICITATION_ORDER = ["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7"]
@@ -120,13 +143,127 @@ def mock_model_response(task: Dict[str, Any], level: str, run_id: int) -> str:
     )
 
 
-def call_model(provider: str, task: Dict[str, Any], level: str, prompt: str, run_id: int) -> str:
+def get_api_key(provider: str) -> str:
+    """Look up the API key for a real provider from the environment.
+
+    Reads from a `.env` file (via python-dotenv) if one is present, falling
+    back to whatever is already set in the shell environment.
+    """
+    env_var = PROVIDER_ENV_VARS.get(provider)
+    if not env_var:
+        raise ValueError(f"No API key env var is configured for provider '{provider}'.")
+
+    api_key = os.environ.get(env_var)
+    if not api_key:
+        raise RuntimeError(
+            f"Missing {env_var}. Copy .env.example to .env and fill it in, "
+            f"or export {env_var} in your shell."
+        )
+    return api_key
+
+
+def call_openrouter(model_name: str, prompt: str, temperature: float, max_tokens: int) -> str:
+    api_key = get_api_key("openrouter")
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        },
+        timeout=60,
+    )
+    response.raise_for_status()
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
+
+
+def call_anthropic(model_name: str, prompt: str, temperature: float, max_tokens: int) -> str:
+    api_key = get_api_key("anthropic")
+    response = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model_name,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": [{"role": "user", "content": prompt}],
+        },
+        timeout=60,
+    )
+    response.raise_for_status()
+    data = response.json()
+    return "".join(block.get("text", "") for block in data.get("content", []) if block.get("type") == "text")
+
+
+def call_openai(model_name: str, prompt: str, temperature: float, max_tokens: int) -> str:
+    api_key = get_api_key("openai")
+    response = requests.post(
+        "https://api.openai.com/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        },
+        timeout=60,
+    )
+    response.raise_for_status()
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
+
+
+REAL_PROVIDERS = {
+    "openrouter": call_openrouter,
+    "anthropic": call_anthropic,
+    "openai": call_openai,
+}
+
+
+def call_model(
+    provider: str,
+    task: Dict[str, Any],
+    level: str,
+    prompt: str,
+    run_id: int,
+    model_name: str | None = None,
+    temperature: float = 0.2,
+    max_tokens: int = 400,
+) -> str:
     if provider == "mock":
         return mock_model_response(task, level, run_id)
 
-    raise NotImplementedError(
-        f"Provider '{provider}' is not implemented yet. "
-        "Start with --provider mock, then add OpenAI/Ollama/other adapters here."
+    adapter = REAL_PROVIDERS.get(provider)
+    if adapter is None:
+        raise NotImplementedError(
+            f"Provider '{provider}' is not implemented. "
+            f"Supported providers: mock, {', '.join(REAL_PROVIDERS)}."
+        )
+
+    last_error: Exception | None = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            return adapter(model_name, prompt, temperature, max_tokens)
+        except requests.exceptions.RequestException as exc:
+            last_error = exc
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_BASE_DELAY_SECONDS * (2**attempt))
+
+    raise RuntimeError(
+        f"Failed to call provider '{provider}' after {MAX_RETRIES} attempts: {last_error}"
     )
 
 
@@ -147,13 +284,19 @@ def main() -> None:
     tasks = load_jsonl(task_file)
     levels = config["elicitation_levels"]
     runs_per_task = int(config.get("runs_per_task", 1))
+    model_name = config["model"].get("name")
+    temperature = float(config["model"].get("temperature", 0.2))
+    max_tokens = int(config["model"].get("max_tokens", 400))
 
     rows = []
     for task in tasks:
         for level in levels:
             for run_id in range(runs_per_task):
                 prompt = build_prompt(level, task["question"])
-                output = call_model(provider, task, level, prompt, run_id)
+                output = call_model(
+                    provider, task, level, prompt, run_id,
+                    model_name=model_name, temperature=temperature, max_tokens=max_tokens,
+                )
                 rows.append(
                     {
                         "benchmark_name": config["benchmark_name"],
