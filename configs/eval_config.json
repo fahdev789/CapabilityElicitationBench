@@ -6,7 +6,7 @@
         "provider": "openrouter",
         "name": "anthropic/claude-sonnet-5",
         "temperature": 0.2,
-        "max_tokens": 400
+        "max_tokens": 2048
     },
     "elicitation_levels": [
         "L0",
