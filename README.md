@@ -139,7 +139,7 @@ CapabilityElicitationBench/
 ## Quick start
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/fahdev789/CapabilityElicitationBench
 cd CapabilityElicitationBench
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
