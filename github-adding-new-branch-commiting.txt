@@ -1,0 +1,73 @@
+!git config --global user.name "username"
+!git config --global user.email "email"
+
+print("Git identuty configured globally")
+
+
+
+22222222222222222222222 Using GitHub Secret Tokens 2222222222222222222222222222222
+
+# Saving the Secret Keys at the Secret Colab environment
+
+# It's recommended to store your GitHub PAT in Colab secrets.
+# Go to the '🔑' icon on the left panel, click 'Add new secret', set 'Name' to 'GH_TOKEN', and 'Value' to your PAT.
+
+from google.colab import userdata
+
+# Retrieve the PAT from Colab secrets
+GH_TOKEN = userdata.get('GITHUB_TOKEN')
+
+if not GH_TOKEN:
+    print("Error: GitHub PAT not found in Colab secrets. Please add it as 'GH_TOKEN'.")
+else:
+    # Construct the remote URL with the PAT
+    remote_url = f"https://oauth2:{GH_TOKEN}@github.com/fahdev789/CapabilityElicitationBench.git"
+
+    # Set the remote URL for 'origin'
+    # !git remote set-url origin {remote_url}
+    !git remote set-url origin {remote_url}
+    print("Git remote URL updated with PAT from Colab secrets.")
+
+
+
+print("Adding modified files to git...")
+!git add configs/eval_config.json
+print("Commiting changes...")
+
+!git commit -m "Updat Eval config file"
+
+!git push
+
+
+
+###########################################################################################################
+
+Adding new branch to the GitHub
+
+!git checkout main # getting into the main branch
+
+!git pull origin main 
+
+
+-----------------------------Creating a new branch-----------------------------------------------
+
+!git checkout -b feat/real-model-adaptors
+
+!git apply real-model-adaptors.patch
+
+!git diff
+
+!git add .
+
+!git commit -m "Add model adaptors for OpenRouter, OpenAI, Anthropic"
+
+!git push -m origin feat/real-model-adaptors
+
+
+
+
+
+
+
+
+
